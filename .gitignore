@@ -1,0 +1,25 @@
+# Build directories
+build/
+
+# Binaries
+ray
+ray_debug
+*.ppm
+
+# Object files (in case any escape to root)
+*.o
+
+# Dependency files (in case any escape to root)
+*.d
+
+# Debug/sanitizer outputs
+*.dSYM/
+vgcore.*
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
