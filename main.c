@@ -1,84 +1,44 @@
 #include <assert.h>
 #include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
 
-typedef struct {
-    float x, y, z;
-} vec3_t;
+#include "vec3.h"
+#include "ray.h"
 
-inline vec3_t vec3_add(const vec3_t v, const vec3_t w) {
-    return (vec3_t){
-        .x = v.x + w.x,
-        .y = v.y + w.y,
-        .z = v.z + w.z
-    };
-}
-
-inline vec3_t vec3_sub(const vec3_t v, const vec3_t w) {
-    return (vec3_t){
-        .x = v.x - w.x,
-        .y = v.y - w.y,
-        .z = v.z - w.z
-    };
-}
-
-inline vec3_t vec3_scale(const vec3_t v, float s) {
-    return (vec3_t){
-        .x = v.x * s,
-        .y = v.y * s,
-        .z = v.z * s
-    };
-}
-
-inline float vec3_dot(const vec3_t v, const vec3_t w) {
-    return v.x * w.x + v.y * w.y + v.z * w.z;
-}
-
-inline float vec3_length(const vec3_t v) {
-    return sqrtf(vec3_dot(v, v));
-}
-
-inline vec3_t vec3_norm(const vec3_t v) {
-    float len = vec3_length(v);
-    assert(len != 0.0f && "Cannot normalize zero-length vector");
-
-    return vec3_scale(v, 1.0f / len);
-}
-
-typedef struct {
-    vec3_t origin;
-    vec3_t direction;
-} ray_t;
-
-inline bool hit_sphere(const vec3_t center, float radius, const ray_t r) {
-    vec3_t oc = vec3_sub(r.origin, center);
+static inline float hit_sphere(const vec3_t center, float radius, const ray_t r) {
+    vec3_t oc = vec3_sub(center, r.origin);
     float a = vec3_dot(r.direction, r.direction);
-    float b = 2.0f * vec3_dot(oc, r.direction);
+    float h = vec3_dot(r.direction, oc);
     float c = vec3_dot(oc, oc) - radius * radius;
-    float discriminant = b * b - 4 * a * c;
-    return discriminant >= 0;
+    float discriminant = h * h - a * c;
+
+    if (discriminant < 0.0f) {
+        return -1.0f;
+    } else {
+        return (h - sqrtf(discriminant)) / a;
+    }
 }
 
-inline vec3_t ray_color(const ray_t r) {
-    if (hit_sphere((vec3_t){.x = 0.0f, .y = 0.0f, .z = -1.0f}, 0.5f, r)) {
-        // red
-        return (vec3_t){.x = 1.0f, .y = 0.0f, .z = 0.0f};
+static inline vec3_t ray_color(const ray_t r) {
+    float t = hit_sphere((vec3_t){.x = 0.0f, .y = 0.0f, .z = -1.0f}, 0.5f, r);
+    if (t > 0.0) {
+        vec3_t N = vec3_norm(vec3_sub(ray_at(r, t), (vec3_t){.x = 0.0f, .y = 0.0f, .z = -1.0f}));
+        return vec3_scale((vec3_t){.x = N.x + 1.0f, .y = N.y + 1.0f, .z = N.z + 1.0f}, 0.5f);
     }
 
     vec3_t unit_direction = vec3_norm(r.direction);
-    float t = 0.5f * (unit_direction.y + 1.0f);
+    float a = 0.5f * (unit_direction.y + 1.0f);
 
     return vec3_add(
         vec3_scale(
             // white
             (vec3_t){.x = 1.0f, .y = 1.0f, .z = 1.0f},
-            1.0f - t
+            1.0f - a
         ),
         vec3_scale(
             // sky
             (vec3_t){.x = 0.5f, .y = 0.7f, .z = 1.0f},
-            t
+            a
         )
     );
 }
@@ -151,7 +111,10 @@ int main(void) {
 
             vec3_t ray_direction = vec3_sub(pixel_center, camera_center);
 
-            ray_t r = {.origin = camera_center, .direction = ray_direction};
+            ray_t r = {
+                .origin = camera_center,
+                .direction = vec3_norm(ray_direction)
+            };
 
             vec3_t color = ray_color(r);
             write_color(stdout, color);
