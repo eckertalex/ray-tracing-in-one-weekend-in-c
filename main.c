@@ -65,11 +65,11 @@ void write_color(FILE *out, vec3_t color) {
 int main(void) {
     float aspect_ratio = 16.0f / 9.0f;
     int image_width = 400;
-    int image_height = (int)(image_width / aspect_ratio);
+    int image_height = (int)((float)image_width / aspect_ratio);
     if (image_height < 1) image_height = 1;
 
     float viewport_height = 2.0f;
-    float viewport_width = viewport_height * ((float)image_width / image_height);
+    float viewport_width = viewport_height * ((float)image_width / (float)image_height);
     float focal_length = 1.0f;
 
     vec3_t camera_center = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
@@ -77,8 +77,8 @@ int main(void) {
     vec3_t viewport_u = {.x = viewport_width, .y = 0.0f, .z = 0.0f};
     vec3_t viewport_v = {.x = 0.0f, .y = -viewport_height, .z = 0.0f};
 
-    vec3_t pixel_delta_u = vec3_scale(viewport_u, 1.0f / image_width);
-    vec3_t pixel_delta_v = vec3_scale(viewport_v, 1.0f / image_height);
+    vec3_t pixel_delta_u = vec3_scale(viewport_u, 1.0f / (float)image_width);
+    vec3_t pixel_delta_v = vec3_scale(viewport_v, 1.0f / (float)image_height);
 
     vec3_t viewport_upper_left =
         vec3_sub(
